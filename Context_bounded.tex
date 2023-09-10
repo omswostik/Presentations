@@ -1,0 +1,520 @@
+\documentclass[10pt,notheorems]{beamer}
+\usetheme[progressbar=frametitle]{metropolis}
+\usepackage{appendixnumberbeamer}
+
+\usepackage{booktabs}
+\usepackage[scale=2]{ccicons}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\setbeamertemplate{theorems}[numbered] % to number
+
+\theoremstyle{plain} % insert bellow all blocks you want in italic
+\newtheorem{theorem}{Theorem} 
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usepackage{graphicx}
+\graphicspath{{C:\Users\swost\Gdb\pds_def.jpg}}
+\graphicspath{{C:\Users\swost\Gdb\Algo_WL.jpg}}
+\graphicspath{{C:\Users\swost\Gdb\dcpds.jpg}}
+\graphicspath{{C:\Users\swost\Gdb\op_semantics.jpg}}
+\graphicspath{{C:\Users\swost\Gdb\Delta_t_defn.jpg}}
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{cite}
+\usepackage{todonotes}
+\usepackage{upgreek}
+\usepackage{bm}
+\usepackage{xspace}
+\newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
+\usepackage{subcaption}
+
+\definecolor{CanvasBG}{HTML}{FAFAFA}
+
+% From the official style guide
+\definecolor{UnccGreen}{HTML}{00703C}
+\definecolor{UnccGold}{HTML}{B3A369}
+\definecolor{UnccLightGreen}{HTML}{C3D7A4}
+\definecolor{UnccYellow}{HTML}{F0CB00}
+\definecolor{UnccOrange}{HTML}{F3901D}
+\definecolor{UnccLightYellow}{HTML}{FFF6DC}
+\definecolor{UnccBlue}{HTML}{00728F}
+\definecolor{UnccPink}{HTML}{DE3A6E}
+\definecolor{White}{HTML}{FFFFFF}
+\definecolor{LightGray}{HTML}{DDDDDD}
+
+\definecolor{WarmGray}{HTML}{696158}
+\definecolor{StoneGray}{HTML}{717C7D}
+\definecolor{DarkGreen}{HTML}{2C5234}
+\definecolor{LightGreen}{HTML}{509E2F}
+\definecolor{BrightGold}{HTML}{F0CB00}
+
+\definecolor{Royal}{HTML}{72246C}
+\definecolor{Ocean}{HTML}{006BA6}
+\definecolor{Flash}{HTML}{B52555}
+\definecolor{Citrus}{HTML}{FFB81C}
+\definecolor{Spring}{HTML}{CEDC00}
+
+\definecolor{Garden}{HTML}{B7CE95}
+\definecolor{Sand}{HTML}{F0E991}
+\definecolor{Bloom}{HTML}{F1E6B2}
+\definecolor{Clay}{HTML}{B7B09C}
+\definecolor{Cloud}{HTML}{BAC5B9}
+
+\setbeamercolor{frametitle}{bg=UnccGreen}
+\setbeamercolor{progress bar}{bg=BrightGold, fg=UnccGreen}
+\setbeamercolor{alerted text}{fg=Flash}
+
+\setbeamercolor{block title}{bg=LightGreen, fg=White}
+\setbeamercolor{block title example}{bg=Ocean, fg=White}
+\setbeamercolor{block title alerted}{bg=Citrus, fg=White}
+\setbeamercolor{block body}{bg=CanvasBG}
+
+\metroset{titleformat=smallcaps, progressbar=foot}
+
+\makeatletter
+\setlength{\metropolis@progressinheadfoot@linewidth}{2pt}
+\setlength{\metropolis@titleseparator@linewidth}{2pt}
+\setlength{\metropolis@progressonsectionpage@linewidth}{2pt}
+
+\usepackage[T1]{fontenc}
+\usefonttheme{serif}
+\usefonttheme{professionalfonts}
+\usepackage{amsmath, tgpagella, eucal, eufrak}
+\usepackage{amsfonts}
+\usepackage{mathrsfs}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{varioref}
+\usepackage{hyperref}
+\usepackage[noabbrev]{cleveref}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\title{Context-bounded Model Checking}
+\subtitle{}
+% \date{\today}
+\date{}
+\author{Om Swostik Mishra}
+\institute{IIT Bombay}
+% \titlegraphic{\hfill\includegraphics[height=1.5cm]{logo.pdf}}
+
+\begin{document}
+
+%insert frame on computing post*
+%insert some frames on the paper mam sent i.e elaborate on the restriction caused by the assumptions and
+%discuss the recent progress
+%describe fork-join, don't just read slides
+%let's make a txt file containing comments and ideas
+
+\begin{frame}
+    \maketitle
+\end{frame}
+\begin{frame}{Introduction}
+    \begin{itemize}
+        \nocite{qadeer2005context}
+        \item The interaction between concurrently executing threads of a program might lead to programming 
+        errors that are difficult to reproduce and fix.
+        \item In general, the problem of verifying a concurrent Boolean program is undecidable \cite{ramalingam2000context}.
+        \item We will show that the analysis is decidable if the number of context switches
+        is bounded by an arbitrary constant.
+        \item In general, restricting the number of context switches is not sound as there could be dynamic systems 
+        with multiple processes and threads where context switches happen at a high frequency .
+        \item However, the analysis is sound up till the context bound as every thread is explored for an 
+        unbounded stack depth.
+    \end{itemize}
+\end{frame}
+\begin{frame}{The Problem}
+    \begin{itemize}
+        \item We will analyze the following problem,\\
+        Given a Boolean program $P$ and an integer $k$, does $P$ go wrong by failing an assertion with at most $k$
+        contexts?
+        \item A \textit{context} is an uninterrupted set of actions by a single thread.
+        \item An execution with $k$ contexts invloves $k-1$ \textit{context switches} i.e execution 
+        switches from one thread to another exactly $k-1$ times.
+        \item The above problem is decidable and there exists an algorithm which decides it, that is polynomial in the size of 
+        $P$ and exponential in the size of $k$.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Pushdown Systems}
+    \vskip-1ex
+    \begin{center}
+    \includegraphics[scale=0.4]{pds_def.jpg}
+    \end{center}
+    \begin{itemize}
+      \item A single-stack pushdown system is a 5-tuple, 
+      \[P=\:(G,\Gamma,\Delta,g_{in},w_{in})\]
+      \item $G$ and $\Gamma$ refer to the set of \textit{global states} and \textit{stack alphabet} respectively.
+      \item A \textit{stack} $w$ is an element of $\Gamma^*$.
+      \item A \textit{configuration} is a member of $G\times \Gamma^*$, such that any $c\in G\times \Gamma^*$ can be written as $c=\langle g,w \rangle$, where 
+      $g\in G$ and $w\in \Gamma^*$.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Pushdown Systems (continued)}
+    \begin{itemize}
+        \item The \textit{transition relation} $\Delta$ over $G$ and $\Gamma$ is a finite subset
+        of $(G\times \Gamma)\times(G\times \Gamma^*)$.
+        \item $c_{in}=\langle g_{in},w_{in}\rangle$ refers to the initial configuration of 
+        the pushdown system $P$.
+        \item Given $\Delta$, we can define a transition system on configurations $\rightarrow_{\Delta}$ as follows:\\
+        \[\langle g,\gamma w^{\prime} \rangle \rightarrow_{\Delta} \langle g^{\prime},ww^{\prime}\rangle,
+        \:\:\text{for all}\:\:w^{\prime}\in \Gamma^*\:\:\text{iff}\:\:(\langle g,\gamma\rangle,\langle g^{\prime},w\rangle)\in \Delta\]
+        \item Let $\rightarrow^*_{\Delta}$ denote the reflexive-transitive closure of $\rightarrow_{\Delta}$
+        \item By definiton of $\Delta$ above, there are no transitions from a configuration whose stack is empty.
+        Hence, the PDS would halt in this case.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Reachable configurations}
+   \begin{itemize}
+    \item A configuration $c$ is called \textit{reachable} iff $c_{in}\rightarrow_{\Delta}^* c$, where 
+    $c_{in}$ is the initial configuration.
+    \item A \textit{pushdown store automaton} $A=(Q,\Gamma,\delta, I,F)$ is a finite automaton with states 
+    $Q$, alphabet $\Gamma$, $\delta\subseteq Q\times\Gamma\times Q$ as the transition function, initial states $I$ and
+    final states $F$.
+    \item The sets $Q$ and $I$ satisfy $G\subseteq Q$ and $I\subseteq G$.
+    \item $A$ accepts a pushdown configuration $\langle g,w\rangle$ iff $A$ accepts $w$ when started in the state $g$.   
+    \item A subset $S\subseteq G\times \Gamma^*$ is called regular if there exists a pushdown store automaton 
+    $A$ such that $S=L(A)$.
+    \item The reachability problem for pushdown systems is decidable because the set of reachable configurations
+    from any initial configuration forms a regular set.  
+   \end{itemize} 
+\end{frame}
+\begin{frame}{Reachable configurations (continued)}
+    \begin{itemize}
+        \item For a pushdown system $P= (G,\Gamma,\Delta,g_{in},w_{in})$ and a set of configurations 
+        $S\subseteq G\times \Gamma^*$, $Post_{\Delta}^*(S)$ is the set of configurations reachable from $S$ i.e.
+        \[Post_{\Delta}^*(S)=\{c\:|\:\exists c^{\prime}\in S,\:\:c^{\prime}\rightarrow_{\Delta}^*c\}\]
+        \item The set of configurations reachable from a regular set forms a regular set. More precisely,
+        \begin{theorem}\label{thm1}
+            Let $P=(G,\Gamma,\Delta, g_{in},w_{in})$ be a pushdown system and let $A$ be a regular pushdown store
+            automaton. There exists a regular pushdown store automaton $A^{\prime}$ such that $Post_{\Delta}^*(L(A))=L(A^{\prime})$.
+            The automaton $A^{\prime}$ can be constructed from $A$ in time $O(|P|^2|A|+|P|^3)$ \cite{schwoon2002model}.
+        \end{theorem}
+    \end{itemize}
+\end{frame}
+\begin{frame}{Concurrent Pushdown Systems}
+    \begin{itemize}
+        \item A \textit{concurrent pushdown system} is a tuple 
+        \[P=(G,\Gamma,\Delta_0,\dots,\Delta_N,g_{in},w_{in})\]
+        \item $\Delta_0,\dots ,\Delta_N$ are transition relations over $G$ and $\Gamma$, $g_{in}$ is an initial 
+        state and $w_{in}$ is an initial stack.
+        \item A configuration of a concurrent pushdown system is a tuple $c=\langle g,w_0,\dots,w_N\rangle$ where $g\in G$ and $w_i\in\Gamma^*$.
+        \item The initial configuration of $P$ is $\langle g,w_{in},\dots,w_{in}\rangle$ where all $N+1$ stacks are 
+        initialized to $w_{in}$.
+        \item The transition system of $P$ ($\rightarrow_P$) rewrites the global state while changing any one
+        of the stacks, according to the transition relation of the PDS assciated to that stack.
+        \item More formally, 
+        \[\langle g,w_0,w_1\dots ,w_i,\dots w_N\rangle\rightarrow_i \langle g^{\prime},w_0,w_1\dots ,w^{\prime}_i,\dots w_N\rangle\:\:\text{iff}\] 
+        \[\langle g,w_i\rangle\rightarrow_{\Delta_i}\langle g^{\prime},w^{\prime}_i\rangle\]
+    \end{itemize}
+\end{frame}
+\begin{frame}{Concurrent Pushdown Systems (continued)}
+     \begin{itemize}
+        \item $\rightarrow_P$ is defined on the configurations of $P$ by the union of $\rightarrow_i$ i.e.
+        \[\rightarrow_P\:=\:\bigcup_{i=0}^N \rightarrow_i\]
+        \item $\rightarrow^*_P$ denotes the reflexive, transitive closure of $P$.    
+        
+     \end{itemize} 
+\end{frame}
+\begin{frame}{Reachability}
+    \begin{itemize}
+        \item A configuration $c$ is called reachable iff $c_{in}\rightarrow_P^* c$, where $c_{in}$ is the 
+        initial configuration.
+        \item In general, checking reachability for concurrent pushdown systems is an undecidable problem \cite{ramalingam2000context}.
+        \item However, bounding the number of context switches leads to a decidable restriction of the problem.
+        \item For $k\in \mathbb{N}$, we define $\xrightarrow{k}$ as the \textit{$k$-bounded transition relation},\\
+        $c\xrightarrow{1} c^{\prime}$ iff there exists $i$ such that $c\rightarrow_i^* c^{\prime}$\\
+        $c\xrightarrow{k+1} c^{\prime}$ iff there exists $c^{''}$ and $i$ such that $c\xrightarrow{k}c^{''}$ and $c^{''}\rightarrow_i^* c^{\prime}$
+        \item A $k$-bounded transition contains atmost $k-1$ context switches in which a new 
+        relation $\rightarrow_i$ can be chosen.
+        \item A configuration $c$ is \textit{$k$-reachable} if $c_{in}\xrightarrow{k} c$. 
+        \item We define the \textit{$k$-bounded reachability} problem as follows,\\
+        Given two configuration $c_0$ and $c_1$, is it the case that $c_0\xrightarrow{k} c_1$?
+    \end{itemize}
+\end{frame}
+\begin{frame}{Reachability (continued)}
+    \begin{itemize}
+        \item We will show that the $k$-bounded reachability problem is decidable.
+        \item To do this, we define a transition relation over \textit{aggregate configurations} i.e. 
+        over configurations of the form $\langle\langle g,R_0,\dots, R_N\rangle\rangle$ where $R_i$ are regular subsets 
+        of $\Gamma^*$.
+        \item For $g\in G$ and a regular set $R\subseteq \Gamma^*$,
+        \[\langle\langle g,R\rangle\rangle\:=\:\{\langle g,w\rangle\:|\:w\in R\}\]
+        \item Let $G=\{g_1,\dots,g_m\}$. Any regular set $S\subseteq G\times \Gamma^*$ can be written as 
+        \begin{equation}\label{eq:1} S\:=\:\biguplus_{i=1}^{m}\langle\langle g_i,R_i\rangle\rangle\end{equation}
+        where each set $R_i\subseteq \Gamma^*$ is regular.
+        \item By Theorem \ref{thm1}, the set $Post^*_{\Delta}(S)$ can be written in the form (\ref{eq:1}), if $S$ is regular.  
+    \end{itemize}
+\end{frame}
+\begin{frame}{Reachability (continued)}
+    \begin{itemize}
+        \item We say $\langle\langle g^{\prime},R^{\prime}\rangle\rangle\in Post^*_{\Delta}(S)$ if $Post^*_{\Delta}(S)=\biguplus_{i=1}^m \langle\langle g_i,R_i\rangle\rangle$,
+        where $\langle\langle g^{\prime},R^{\prime}\rangle\rangle=\langle\langle g_j,R_j\rangle\rangle$ (for some $j$ such that $1\leq j\leq m$).
+        \item We define relations $\Rightarrow_i$ on aggregate configurations,
+        \[\langle\langle g,R_0,\dots ,R_i,\dots ,R_N\rangle\rangle\Rightarrow_i \langle\langle g^{\prime},R_0,\dots R^{\prime}_i,\dots,R_N\rangle\rangle\]
+        if $\langle\langle g^{\prime},R^{\prime}_i\rangle\rangle\in Post_{\Delta}^*(\langle\langle g,R_i\rangle\rangle)$.
+        \item We define the transition relation on aggregate configurations $\Rightarrow$ as $\bigcup_{i=0}^N\Rightarrow_i$.
+        \item For aggregate configurations $a_1$ and $a_2$, $a_1\xRightarrow{k}a_2$, if $a_2$ can be reached from 
+        $a_1$ using at most $k$ transitions.
+        \item Using the notations described above, the following reduces
+        $k$-bounded reachability problem to sequential appications of $Post_{\Delta}^*$ operator,
+    \end{itemize}
+\end{frame}
+\begin{frame}{Reachability (continued)}
+    \begin{theorem}\label{thm2}
+        Let $P=(G,\Gamma,\Delta_0,\dots,\Delta_N,g_{in},w_{in})$ be a concurrent pushdown system.
+        Then, for any $k$, we have $\langle g,w_0,\dots,w_N\rangle\xrightarrow{k} \langle g^{\prime},w^{\prime}_0,\dots,w^{\prime}_N\rangle$ iff
+        $\langle\langle g,\{w_0\},\dots,\{w_N\}\rangle\rangle \xRightarrow{k} \langle\langle g^{\prime},R^{\prime}_0,\dots,R^{\prime}_N\rangle\rangle$ 
+        for some $R^{\prime}_0,\dots, R^{\prime}_N$ such that $w^{\prime}_i\in R^{\prime}_i$ for all $i$ such that $1\leq i\leq N$.
+    \end{theorem}
+\end{frame}
+\begin{frame}{Algorithm}
+        Using Theorem \ref{thm1} and Theorem \ref{thm2}, we can generate an algorithm 
+        for solving the context-bounded reachability problem for concurrent pushdown systems. 
+    \vskip -1ex
+    \begin{figure}[h!]
+    \includegraphics[scale=0.318]{Algo_WL.jpg}
+    \caption{The algorithm}
+    \label{fig:1}
+    \end{figure}
+\end{frame}
+\begin{frame}{Algorithm (continued)}
+    \begin{itemize}
+        \item The algorithm processes a worklist WL which contains a set of items of the form 
+        $(\langle g, A_0,\dots, A_N\rangle,i)$, where $g\in G$ is a global state, $A_j$ are pushdown store automata and $i\in\{0,1,\dots,k-1\}$. 
+        \item Remove(WL) removes an item from the worklist and returns it
+        \item Add(WL, item) adds item to the worklist 
+        \item The inital pushdown store automata $A_{in}$ has initial state $g_{in}$ and accepts only 
+        $w_{in}$. 
+        \item Given $A_j^{\prime}=Post^*_{\Delta}(A_j)$, we construct $A_j^{\prime}$ according to 
+        Theorem \ref{thm1}, such that $L(A_j^{\prime})=Post^*_{\Delta}(L(A_j))$.
+        \item $G(A_j^{\prime})=\{g^{\prime}\:|\:\exists w.\langle g^{\prime},w\rangle\in L(A_j^{\prime})\}$.
+        \item All pushdown store automata involved in the algorithm have atmost one start state.
+        \item Given an automata $A$ and a state $g\in G$, RENAME($A,g$) returns the result of renaming the start state (if any)
+        of $A$ to $g$
+        \item ANONYMIZE($A,g$) returns the result of renaming all states of $G$ (except $g$) to fresh states which are not in $G$.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Algorithm (continued)}
+    %cite in first para 
+    The operations RENAME and ANONYMIZE are necessary for applying Theorem \ref{thm1} repeatedly
+    as the construction of the pushdown store automata uses elements of $G$ as states \cite{schwoon2002model}. 
+    In order to avoid errors in the construction, renaming on states of $G$ is necessary. 
+    \begin{theorem}\label{thm3}
+    Let $P=(G,\Gamma, \Delta_0,\dots,\Delta_N,g_{in},w_{in})$ be a concurrent pushdown system.
+    For any $k$, the algorithm terminates on input $P$ and $k$, and 
+    $\langle\langle g_{in},w_{in},\dots,w_{in}\rangle\rangle \xRightarrow{k}\langle\langle g^{\prime},R^{\prime}_0,\dots,R^{\prime}_N\rangle\rangle$
+    iff the algorithm outputs Reach with $\langle g^{\prime},A^{\prime}_0,\dots,A^{\prime}_N\rangle\in$ Reach such that 
+    $L(A_i^{\prime})=\langle\langle g^{\prime},R^{\prime}_i \rangle\rangle$ for all $i\in\{0,1,\dots,N\}$.
+    \end{theorem}
+    Theorem \ref{thm2} together with Theorem \ref{thm3}, imply that the algorithm solves the $k$-bounded reachability problem. 
+    The next natural step is to look at the running time of the algorithm.
+\end{frame}
+\begin{frame}{Algorithm (continued)}
+    \begin{theorem}\label{thm4}
+        Given a concurrent pushdown system $P=(G,\Gamma, \Delta_0,\dots,\Delta_N,g_{in},w_{in})$ and a bound $k$,
+        the algorithm in Figure \ref{fig:1} decides the $k$-bounded reachability problem in time
+        $O(k^3(N|G|)^k|P|^5)$.
+    \end{theorem}
+We will now look at dynamic concurrent pushdown systems with additional operations, fork and join. 
+\end{frame}
+\begin{frame}{Dynamic Concurrent Pushdown Systems}
+    \begin{itemize}
+        \item To allow for dynamic fork-join parallelism, thread identifiers are to be stored as program
+        variables. They are members of the set $Tid=\{0,1,2,\dots\}$.
+        \item A dynamic concurrent PDS is a tuple $(GBV,GTV,LBV,LTV,\Delta,\Delta_F,\Delta_J,g_{in},\gamma_{in})$.
+        \item $GBV$ is the set of all global variables containing boolean values and $GTV$ is the 
+        set of all global variables containing thread identifiers.
+        \item $G$ is the (infinite) set of all valuations to the global variables.
+        \item $LBV$ is the set of all local variables containing boolean values $LTV$ is the set of all
+        local variables containing thread identifiers.
+        \item $\Gamma$ is the (infinite) set of all valuations to the local variables.
+        \item $\Delta\subseteq (G\times\Gamma)\times(G\times\Gamma^*)$ is the transition relation describing the single step of any thread.
+        \item $\Delta_F\subseteq Tid\times (G\times\Gamma)\times(G\times\Gamma^*)$ is the fork transition 
+        relation.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Dynamic Concurrent Pushdown Systems (continued)}
+    \begin{itemize}
+        \item If $(t,\langle g,\gamma\rangle,\langle g^{\prime},w\rangle)\in \Delta_F$, then with the global store 
+        being $g$, a thread with $\gamma$ at the top of its stack may fork a thread with identifier $t$, changing the global 
+        store to $g^{\prime}$ and rewriting the top of the stack to $w$.
+        \item $\Delta_J\subseteq LTV\times (G\times\Gamma)\times(G\times\Gamma^*)$ is the join transition relation.
+        \item If $(x,\langle g,\gamma\rangle,\langle g^{\prime},w\rangle)\in \Delta_J$, then with the global store being $g$,
+        a thread with $\gamma$ at the top of its stack blocks until the thread with identifier $\gamma(x)$ 
+        finishes execution. On getting unblocked, the global store is modified to $g^{\prime}$ and the top
+        of the stack is rewritten with $w$.
+        \item $g_{in}$ is the initial valuation to the set of all global variables such that 
+        $g_{in}(x)=0$ for all $x\in GTV$. 
+        \item $\gamma_{in}$ is the initial valuation to the set of all local variables such that 
+        $\gamma_{in}(x)=0$ for all $x\in LTV$. 
+    \end{itemize}
+\end{frame}
+\begin{frame}{Dynamic Concurrent Pushdown Systems (continued)}
+    \includegraphics[scale=0.35]{dcpds.jpg}
+    \begin{itemize}
+        \item Every dynamic concurrent PDS is equipped with a special symbol $\$\not\in\Gamma$ to mark the bottom of each stack.
+        \item A configuartion of the system is $\langle g,n,ss\rangle$, where $g$ is the global state, 
+        $n$ is the identifier of the last thread to be forked and $ss(t)$ is the stack for the thread 
+        with identifier $t\in Tid$. 
+        \item The execution of the dynamic concurrent PDS starts in the configuration $\langle g_{in},0,ss_0\rangle$,
+        where $ss_0(t)=\gamma_{in}\$$ for all $t\in Tid$.    
+        \item The execution follows a certain set of rules which define the transitions that may be performed
+        starting from any thread $t$ in the configuration $\langle g,n,ss\rangle$. 
+    \end{itemize}
+\end{frame}
+\begin{frame}{Operational Semantics}
+   \includegraphics[scale=0.255]{op_semantics.jpg} 
+   \centering
+   \begin{itemize}
+    \item All rules have the condition $t\leq n$, which indicates that thread $t$ must have already been forked.
+    \item The rule SEQ allows thread $t$ to perform a move according to the transition relation $\Delta$.
+    \item The rule SEQEND is enabled if the only symbol of the stack of thread $t$ is $\$$ which is popped from the stack 
+    without changing the global state.
+\end{itemize}
+\end{frame}
+\begin{frame}{Operational Semantics (continued)}
+    \begin{itemize}
+        \item The rule FORK creates a new thread with identifier $n+1$. 
+        \item The rule JOIN is enabled if thread $\gamma(x)$ has terminated, where $\gamma$ is the top of the
+        stack of thread $t$. Termination of a thread is indicated by an empty stack.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Assumptions}
+    \begin{itemize}
+        \item In realistic concurrent programs, the usage of thread identifiers is restricted.
+        \item In view of this, we introduce some assumptions. 
+        \item A \textit{renaming function} is a partial function from $Tid$ to $Tid$. 
+        \item When a renaming function is applied to a global store $g$, it returns another store in which 
+        every variable of type $Tid$ is transformed by an application of $f$. 
+        \item If $f$ is undefined on some global variable in $g$, it is undefined on $g$.
+        \item A renaming function can also be applied to a local store or a sequence of local stores by a pointwise 
+        application to each element of the sequence.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Assumptions (continued)}
+    \textbf{A1.} For all $g\in G, \gamma\in \Gamma$ and renaming functions $f$ such that $f(g)$ and $f(\gamma)$ are defined,
+    \begin{enumerate}
+        \item If $(\langle g,\gamma\rangle,\langle g^{\prime},w\rangle)\in \Delta$, then there exists 
+        $fg^{\prime}\in G$ and $fw\in\Gamma^*$ such that $fg^{\prime}=f(g^{\prime})$, $fw=f(w)$, and
+        $(\langle f(g),f(\gamma)\rangle,\langle fg^{\prime},fw\rangle)\in \Delta$.
+        \item If $(\langle f(g),f(\gamma)\rangle,\langle fg^{\prime},fw\rangle)\in \Delta$, then there 
+        exists $g^{\prime}\in G$ and $w\in \Gamma^*$ such that $fg^{\prime}=f(g^{\prime})$, $fw=f(w)$ and 
+        $(\langle g,\gamma\rangle,\langle g^{\prime},w\rangle)\in \Delta$.
+    \end{enumerate}
+    \textbf{A2.} For all $t\in Tid$, $g\in G$, $\gamma\in \Gamma$ and renaming functions $f$ such that 
+    $f(t)$, $f(g)$ and $f(\gamma)$ are all defined,
+    \begin{enumerate}
+        \item If $(t,\langle g,\gamma\rangle,\langle g^{\prime},w\rangle)\in \Delta_F$, then there exists 
+        $fg^{\prime}\in G$ and $fw\in \Gamma^*$ such that $fg^{\prime}=f(g^{\prime})$, $fw=f(w)$ and 
+        $(f(t),\langle f(g),f(\gamma)\rangle,\langle fg^{\prime},fw\rangle)\in\Delta_F$.
+        \item If $(f(t),\langle f(g),f(\gamma)\rangle,\langle fg^{\prime},fw\rangle)\in \Delta_F$, then there 
+        exists $g^{\prime}\in G$ and $w\in \Gamma^*$ such that $fg^{\prime}=f(g^{\prime})$, $fw=f(w)$ and 
+        $(t,\langle g,\gamma\rangle,\langle g^{\prime},w\rangle)\in \Delta_F$.
+    \end{enumerate} 
+\end{frame}
+\begin{frame}{Assumptions (continued)}
+    \textbf{A3.} For all $x\in LTV$, $g\in G$, $\gamma\in \Gamma$ and renaming functions $f$ such that 
+    $f(g)$ and $f(\gamma)$ are defined,
+    \begin{enumerate}
+        \item If $(x,\langle g,\gamma\rangle,\langle g^{\prime},w\rangle)\in \Delta_J$, then there exists 
+        $fg^{\prime}\in G$ and $fw\in \Gamma^*$ such that $fg^{\prime}=f(g^{\prime})$, $fw=f(w)$ and 
+        $(x,\langle f(g),f(\gamma)\rangle,\langle fg^{\prime},fw\rangle)\in\Delta_J$.
+        \item If $(x,\langle f(g),f(\gamma)\rangle,\langle fg^{\prime},fw\rangle)\in \Delta_J$, then there 
+        exists $g^{\prime}\in G$ and $w\in \Gamma^*$ such that $fg^{\prime}=f(g^{\prime})$, $fw=f(w)$ and 
+        $(x,\langle g,\gamma\rangle,\langle g^{\prime},w\rangle)\in \Delta_J$.
+    \end{enumerate}
+    Henceforth, these are the assumptions we will be making on $\Delta$, $\Delta_F$ and $\Delta_J$.\\
+    By making these asssumptions, we are exploiting the restricted usage of thread identifiers in concurrent systems.
+\end{frame}
+\begin{frame}{Reduction to Concurrent PDS}
+    \begin{itemize}
+        \item We will reduce the \textit{$k$-bounded reachability} problem on a dynamic concurrent
+        PDS to a concurrent PDS with $k+1$ threads. 
+        \item Given a dynamic concurrent PDS $P$ and a positive integer $k$, we will construct a 
+        concurrent PDS $P_k$ containing $k+1$ threads with identifiers in $\{0,1,\dots,k\}$ such that 
+        it suffices to verify the $k$-bounded executions of $P_k$.
+        \item In a $k$-bounded execution, at most $k$ different threads may perform a transition. 
+        \item The last thread in $P_k$ doesn't perform a transition, it only exists to simulate
+        the remaining threads in $P$. 
+        \item Let $Tid_k=\{0,1,\dots, k\}$ be the set of thread identifiers bounded by $k$. 
+        \item $AbsG_k$ and $Abs\Gamma_k$ are finite sets which consist of all valuations to global and local variables, 
+        where the variables of thread identifier type are assigned values from $Tid_k$.  
+    \end{itemize}
+\end{frame}
+\begin{frame}{Reduction to Concurrent PDS (continued)}
+    \begin{itemize}
+        \item Given a dynamic concurrent PDS $P=(GBV,GTV,LBV,LTV,\Delta,\Delta_F,\Delta_J,g_{in},\gamma_{in})$, we define,
+        \[ P_k=(AbsG_k\times Tid_k\times \mathscr{P}(Tid_k),Abs\Gamma_k\cup \{\$\}, \Delta_0,\dots,\Delta_k,(g_{in},0,\emptyset),\gamma_{in}\$)\]
+        \item $P_k$ has $k+1$ threads.
+        \item A global state of $P_k$ is a three-tuple $(g,n,\alpha)$, where $g$ is a valuation to the global variables,
+        $n$ is the largest thread identifier whose corresponding thread is allowed to make a transition and 
+        $\alpha$ is the set of thread identifiers whose stacks are empty.
+        \item The initial state is $(g_{in},0,\emptyset)$ which means that only thread $0$ is allowed to make 
+        a transition and no thread has finished execution.
+        \item There are rules for every transition relation $\Delta_t$, for each thread $t\in Tid_k$.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Reduction to Concurrent PDS (continued)}
+    \includegraphics[scale=0.3]{Delta_t_defn.jpg}
+    \begin{itemize}
+        \item All transitions are guarded by the condition $t\leq n$ to ensure that a thread $t$ cannot
+        make a transition if $t>n$.
+        \item The rule ABSSEQ adds transitions from $\Delta$ to $\Delta_t$. 
+        \item The rule ABSSEQEND adds thread $t$ to the set of terminated threads. 
+        \item The rules ABSFORK and ABSFORKNONDET handle thread creation in $P$.  
+    \end{itemize}
+\end{frame}
+\begin{frame}{Reduction to Concurrent PDS (continued)}
+    \begin{itemize}
+        \item The rule ABSFORK increments the counter $n$ allowing thread $n+1$ to simulate the newly
+        forked thread which participates in the $k$-bounded execution.
+        \item The rule ABSFORKNONDET leaves the counter unchanged and the newly forked thread doesn't participate 
+        in the $k$-bounded execution.
+        \item The rule ABSJOIN adds rules from $\Delta_J$ to $\Delta$ by using the fact that the identifiers
+        of all previously terminated threads are present in $\alpha$.
+        \item We will now state the correctness theorems for the transformation.\\ A configuration of 
+        $P_k$, $\langle(g^{\prime},n^{\prime},\alpha),w_0,w_1,\dots,w_k\rangle$, can be written as 
+        $\langle(g^{\prime},n^{\prime},\alpha),ss^{\prime}\rangle$, where $ss^{\prime}$ is a map from $Tid_k$ to $(Abs\Gamma_k\cup \$)^*$. 
+    \end{itemize}
+\end{frame}
+\begin{frame}{Correctness theorems}
+    \begin{theorem}[Soundness]\label{thm5}
+       Let $P$ be a dynamic concurrent pushdown system and $k$ be a positive integer. 
+       Let $\langle g,n,ss\rangle$ be a $k$-reachable configuration of $P$. Then there is a total 
+       renaming function $f: Tid\rightarrow Tid_k$ and a $k$-reachable configuration $\langle(g^{\prime},n^{\prime},\alpha),ss^{\prime}\rangle$
+       of the concurrent pushdown system $P_k$ such that $g^{\prime}=f(g)$ and $ss^{\prime}(f(j))=f(ss(j))$ for all $j\in Tid$.
+    \end{theorem}
+    \begin{theorem}[Completeness]\label{thm6}
+        Let $P$ be a dynamic concurrent pushdown system and $k$ be a positive integer. 
+        Let $\langle(g^{\prime},n^{\prime},\alpha),ss^{\prime}\rangle$ be a $k$-reachable configuration of the concurrent 
+        pushdown system $P_k$. Then there is a total renaming function $f:Tid\rightarrow Tid_k$ and a 
+        $k$-reachable configuration $\langle g,n,ss\rangle$ of $P$ such that $g^{\prime}=f(g)$ and $ss^{\prime}(f(j))=f(ss(j))$ for all $j\in Tid$.
+    \end{theorem}
+ With Theorems \ref{thm5} and \ref{thm6}, we can conclude that our reduction from a dynamic 
+ concurrent pushdown system to a concurrent pushdown system with $k+1$ threads is correct. 
+\end{frame}
+\begin{frame}{Related Work}
+    %cite here
+    %paper ke introduction se hi kar rahe hain, hopefully it's fine
+    \begin{itemize}
+        \item The classical notion of context bounding is too restrictive.
+        \item For dynamic systems, bounding the number of context switches bounds the number of 
+        threads involved.
+        \item $K$-bounded computation: Each thread can be interrupted and resumed at most $K$ times. 
+        \item Decidability also holds under this new restriction.
+        \item Given a program $P$ and an integer $K$, the problem of checking whether a program fails
+        some assertion in a $K$-bounded computation is EXPSPACE-complete \cite{atig2011context}.
+        %\item Under the classical notion of context-boundedness, \textit{$k$-bounded reachability} 
+        %is an NP-complete. 
+    \end{itemize}
+\end{frame}
+\begin{frame}[allowframebreaks]{References}
+    \bibliography{check}{}
+    \bibliographystyle{plain}
+\end{frame}
+\begin{frame}{Conclusion}
+    \begin{center}
+        THANK YOU!
+    \end{center}
+\end{frame}
+\end{document}
